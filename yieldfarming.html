@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Yield Farming Calculator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f5f5f5;
+      padding: 20px;
+      color: #333;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .header .back-arrow {
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .card-subtitle {
+      color: #777;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .currency-switch {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .currency-btn {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .currency-btn.active {
+      background-color: #0d6efd;
+      color: white;
+    }
+
+    .currency-btn:not(.active) {
+      background-color: #e9ecef;
+      color: #333;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      background-color: #f8f9fa;
+    }
+
+    .input-field::placeholder {
+      color: #aaa;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background-color: #0d6efd;
+      color: white;
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .result-container {
+      background-color: #f8f9fa;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 20px;
+      display: none;
+      border-left: 4px solid #0d6efd;
+    }
+
+    .result-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    .result-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #0d6efd;
+    }
+
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 18px;
+      }
+      .card {
+        padding: 16px;
+      }
+      .currency-btn, .btn {
+        padding: 10px;
+        font-size: 14px;
+      }
+      .input-field {
+        padding: 10px;
+        font-size: 14px;
+      }
+      .result-value {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="back-arrow" onclick="history.back()">?</span>
+    <h1>Yield Farming</h1>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Kalkulator Yield Farming</div>
+    <div class="card-subtitle">Hitung potensi return yield farming.</div>
+
+    <div class="currency-switch">
+      <div class="currency-btn" id="btn-dollar">Dollar ($)</div>
+      <div class="currency-btn active" id="btn-rupiah">Rupiah (Rp)</div>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">Jumlah Deposit (Rp)</label>
+      <input type="number" class="input-field" id="depositAmount" placeholder="contoh: 10000" min="0" step="0.01">
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">APY (%)</label>
+      <input type="number" class="input-field" id="apy" placeholder="contoh: 50" min="0" max="1000" step="0.1">
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">Durasi (hari)</label>
+      <input type="number" class="input-field" id="duration" placeholder="contoh: 365" min="1" step="1">
+    </div>
+
+    <div class="button-group">
+      <div class="btn btn-primary" id="btnCalculate">Hitung</div>
+      <div class="btn btn-secondary" id="btnClear">Hapus</div>
+    </div>
+
+    <!-- Result Display -->
+    <div class="result-container" id="resultContainer">
+      <div class="result-title">Hasil Estimasi:</div>
+      <div class="result-value" id="resultValue">Rp 0,00</div>
+      <div class="result-value" id="resultAPY">(+0.00% dari deposit)</div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let isRupiahMode = true;
+
+    // DOM Elements
+    const btnDollar = document.getElementById('btn-dollar');
+    const btnRupiah = document.getElementById('btn-rupiah');
+    const depositInput = document.getElementById('depositAmount');
+    const apyInput = document.getElementById('apy');
+    const durationInput = document.getElementById('duration');
+    const btnCalculate = document.getElementById('btnCalculate');
+    const btnClear = document.getElementById('btnClear');
+    const resultContainer = document.getElementById('resultContainer');
+    const resultValue = document.getElementById('resultValue');
+    const resultAPY = document.getElementById('resultAPY');
+
+    // Toggle Currency
+    btnDollar.addEventListener('click', () => {
+      isRupiahMode = false;
+      btnDollar.classList.add('active');
+      btnRupiah.classList.remove('active');
+      depositInput.placeholder = "contoh: 100";
+    });
+
+    btnRupiah.addEventListener('click', () => {
+      isRupiahMode = true;
+      btnRupiah.classList.add('active');
+      btnDollar.classList.remove('active');
+      depositInput.placeholder = "contoh: 10000";
+    });
+
+    // Calculate Yield
+    btnCalculate.addEventListener('click', () => {
+      const deposit = parseFloat(depositInput.value);
+      const apy = parseFloat(apyInput.value);
+      const duration = parseInt(durationInput.value);
+
+      if (isNaN(deposit) || isNaN(apy) || isNaN(duration)) {
+        resultContainer.style.display = 'block';
+        resultValue.textContent = 'Isi semua kolom dengan angka valid.';
+        resultAPY.textContent = '';
+        return;
+      }
+
+      // Simple interest formula: deposit * (apy/100) * (duration/365)
+      const interest = deposit * (apy / 100) * (duration / 365);
+      const total = deposit + interest;
+
+      // Format result
+      let formattedTotal;
+      if (isRupiahMode) {
+        formattedTotal = `Rp ${total.toLocaleString('id-ID', { minimumFractionDigits: 2 })}`;
+      } else {
+        formattedTotal = `$${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      }
+
+      resultValue.textContent = formattedTotal;
+      resultAPY.textContent = `(+$${interest.toFixed(2)} atau +${((interest/deposit)*100).toFixed(2)}% dari deposit)`;
+
+      resultContainer.style.display = 'block';
+    });
+
+    // Clear Inputs
+    btnClear.addEventListener('click', () => {
+      depositInput.value = '';
+      apyInput.value = '';
+      durationInput.value = '';
+      resultContainer.style.display = 'none';
+    });
+  </script>
+</body>
+</html>
